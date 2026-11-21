@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Briques et Maths – Marie Frison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: joyeux et encourageant, un jeu de construction pour des élèves de 6e
+   IDEA: une plaque de base où chaque bonne réponse empile une nouvelle brique
+   PICTURE: la construction en briques dans le décor de l'ambiance choisie
+   COLOUR and TYPE: rouge, jaune et bleu des briques sur fond crème ; Fredoka arrondie
+   LAYOUT: question à gauche, construction à droite ; empilé sur téléphone */
+:root{color-scheme:light dark;--bg:light-dark(#fff6df,#15171f);--panel:light-dark(#ffffff,#22263a);--ink:light-dark(#1d1d24,#f2f2f5);--soft:light-dark(#5b5d6b,#b9bccb);--line:light-dark(#eadfc6,#383f58);--grid:light-dark(#d7e3f2,#323a55);--ok:#1f8a3a;--ko:#d01012;--acc:#d01012;--yel:#f6c700;--blu:#0a5bbf}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 Fredoka,"Trebuchet MS",system-ui,sans-serif;overflow-x:clip}
+button,input{font:inherit;color:inherit}
+h1,h2,h3{line-height:1.1;margin:0;text-wrap:balance}
+#hero{position:relative;min-height:230px;display:flex;align-items:flex-end;padding:20px max(4vw,14px);overflow:hidden}
+#hero>svg{position:absolute;inset:0;width:100%;height:100%}
+.plaque{position:relative;background:var(--panel);border-radius:14px;padding:14px 20px;max-width:620px;box-shadow:0 6px 0 rgba(0,0,0,.18)}
+.plaque h1{font-size:clamp(30px,5vw,46px);font-weight:700}
+.plaque .auteur{color:var(--acc);font-weight:600;font-size:17px;margin-top:4px}
+.plaque p{margin:6px 0 0;color:var(--soft);font-size:16px}
+main{max-width:1240px;margin:0 auto;padding:22px max(4vw,14px) 60px}
+.step{margin-bottom:26px}
+.step h2{font-size:24px;font-weight:600;margin-bottom:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px}
+.card{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--panel);border:3px solid var(--line);border-radius:14px;padding:10px 12px 12px;cursor:pointer;min-height:44px;transition:transform .15s}
+.card:hover{transform:translateY(-2px)}
+.card[aria-pressed=true]{border-color:var(--acc);box-shadow:0 5px 0 var(--acc)}
+.card:focus-visible,.opt:focus-visible,.btn:focus-visible,input:focus-visible{outline:3px solid var(--blu);outline-offset:2px}
+.card svg{width:100%;height:auto;border-radius:9px;display:block}
+.card b{font-size:18px;font-weight:600}
+.card small{color:var(--soft);font-size:14px;line-height:1.3}
+.nq{grid-template-columns:repeat(3,minmax(0,1fr));max-width:640px}.nq .card{align-items:center;text-align:center}.nq b{font-size:26px}
+.card .ico{height:54px;width:auto;align-self:flex-start}
+.stars{color:#e0a800;font-size:15px;letter-spacing:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 22px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-weight:600;font-size:18px;cursor:pointer;position:relative;box-shadow:inset 0 -5px 0 rgba(0,0,0,.22);margin-top:12px}
+.btn::before{content:"";position:absolute;left:14px;right:14px;top:-7px;height:8px;background:radial-gradient(circle at 50% 70%,var(--acc) 6px,transparent 6.5px) 0 0/28px 8px repeat-x;filter:brightness(1.08)}
+.btn.alt{background:var(--blu);--acc:var(--blu)}
+.btn.ghost{background:var(--panel);color:var(--ink);border:2px solid var(--line);box-shadow:none}
+.btn.ghost::before{display:none}
+.btn[disabled]{opacity:.45;cursor:default}
+#go{font-size:22px;padding:14px 40px}
+.hud{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.chip{background:var(--panel);border:2px solid var(--line);border-radius:99px;padding:3px 12px;font-size:15px;white-space:nowrap}
+.chip.acc{background:var(--acc);border-color:var(--acc);color:#fff}
+.timer{flex:1 1 140px;height:10px;background:var(--line);border-radius:9px;overflow:hidden}
+.timer i{display:block;height:100%;background:var(--yel);width:100%}
+.play{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:18px;align-items:start}
+.qpanel{background:var(--panel);border-radius:16px;padding:18px 20px;border:2px solid var(--line)}
+.qnum{color:var(--soft);font-size:15px;margin:0}
+.prompt{font-size:20px;margin:4px 0 12px;font-weight:500}
+.m{display:inline-block;font-weight:600;background:light-dark(#fff3c4,#3b3520);border-radius:6px;padding:0 6px;white-space:nowrap}
+.figbox{margin:6px 0 12px}
+.figbox svg{width:100%;height:auto;max-height:300px;display:block;color:var(--ink);background:light-dark(#fbfdff,#1b1f30);border-radius:12px;border:2px solid var(--line)}
+.figbox.click svg{cursor:crosshair;touch-action:manipulation}
+.ink{stroke:currentColor}
+.lab{fill:currentColor;font:600 14px Fredoka,sans-serif}
+.pt{fill:currentColor;font:600 15px Fredoka,sans-serif}
+.len{fill:#0a5bbf;font:600 13px Fredoka,sans-serif;paint-order:stroke;stroke:light-dark(#fbfdff,#1b1f30);stroke-width:4px}
+.grid{stroke:var(--grid);stroke-width:1}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px}
+.opts.long{grid-template-columns:1fr}
+.opt{min-height:48px;padding:10px 14px;border-radius:10px;border:3px solid var(--line);background:var(--bg);cursor:pointer;font-size:18px;text-align:left}
+.opt:hover:not([disabled]){border-color:var(--blu)}
+.opt.good{border-color:var(--ok);background:light-dark(#e3f6e7,#163a22)}
+.opt.bad{border-color:var(--ko);background:light-dark(#fde5e5,#45191b)}
+.inrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:20px}
+.inrow input{width:7.5em;min-height:48px;padding:6px 10px;font-size:20px;border:3px solid var(--line);border-radius:10px;background:var(--bg);text-align:center}
+.fb{margin-top:14px;border-radius:12px;padding:12px 16px;border:3px solid}
+.fb.ok{border-color:var(--ok);background:light-dark(#eefaf0,#14301d)}
+.fb.ko{border-color:var(--ko);background:light-dark(#fff0f0,#3a1618)}
+.fb h3{font-size:21px;margin-bottom:4px}
+.fb p{margin:4px 0}
+.rule{background:var(--panel);border-left:6px solid var(--yel);border-radius:8px;padding:8px 12px;margin-top:8px;font-size:16px}
+.rule b{display:block;font-size:14px;color:var(--soft)}
+.build{background:var(--panel);border-radius:16px;border:2px solid var(--line);overflow:hidden;position:sticky;top:12px}
+.build svg{display:block;width:100%;height:auto;max-height:70vh}
+.build p{margin:0;padding:8px 14px;font-size:15px;color:var(--soft)}
+.drop{animation:drop .45s cubic-bezier(.3,1.5,.5,1)}
+@keyframes drop{from{transform:translateY(-80px);opacity:0}}
+.fall{animation:fall 1s ease-in forwards;transform-box:fill-box;transform-origin:center}
+@keyframes fall{0%{transform:translate(0,0) rotate(0)}100%{transform:translate(140px,380px) rotate(80deg);opacity:0}}
+.endgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:22px;align-items:start}
+.endgrid h2{font-size:clamp(30px,4.5vw,44px)}
+.bigstars{font-size:52px;color:#e0a800;letter-spacing:6px;line-height:1.2}
+.bigstars .off{color:var(--line)}
+.revoir{background:var(--panel);border-radius:12px;border:2px solid var(--line);padding:10px 16px;margin-top:12px}
+.revoir ul{margin:6px 0 0;padding-left:20px}
+.row{display:flex;flex-wrap:wrap;gap:12px}
+[hidden]{display:none!important}
+@media(max-width:760px){.play,.endgrid{grid-template-columns:1fr}.build{position:static}.build svg{max-height:340px;margin:0 auto}.prompt{font-size:18px}}
+@media(prefers-reduced-motion:reduce){.drop,.fall{animation:none}.fall{display:none}.card{transition:none}}
+</style>
+</head>
+<body>
+<header id="hero"><svg id="heroScene" viewBox="0 0 900 230" preserveAspectRatio="xMidYMax slice" aria-hidden="true"></svg>
+<div class="plaque"><h1>Briques &amp; Maths</h1><p class="auteur">Créé par Marie Frison</p><p>Chaque bonne réponse pose une brique sur ta construction. Leçons de 6e : droites parallèles et perpendiculaires, demi-droite graduée, distance d’un point à une droite.</p></div></header>
+
+<main>
+<section id="menu">
+  <div class="step"><h2>1. Choisis ton ambiance</h2><div class="cards" id="ambs"></div></div>
+  <div class="step"><h2>2. Choisis ta leçon</h2><div class="cards" id="chaps"></div></div>
+  <div class="step"><h2>3. Choisis ton niveau de maîtrise</h2><div class="cards" id="lvls"></div></div>
+  <div class="step"><h2>4. Combien de questions ?</h2><div class="cards nq" id="nqs"></div></div>
+  <button class="btn" id="go">Construire !</button>
+</section>
+
+<section id="game" hidden>
+  <div class="hud" id="hud"></div>
+  <div class="play">
+    <div class="qpanel" aria-live="polite">
+      <p class="qnum" id="qnum"></p>
+      <div class="prompt" id="prompt"></div>
+      <div class="figbox" id="fig"></div>
+      <div id="answer"></div>
+      <div id="fb"></div>
+    </div>
+    <div class="build"><svg id="buildSvg" viewBox="0 0 300 420" aria-label="Ta construction"></svg><p id="buildCap"></p></div>
+  </div>
+</section>
+
+<section id="end" hidden>
+  <div class="endgrid">
+    <div class="build"><svg id="endSvg" viewBox="0 0 300 420" aria-label="Construction terminée"></svg></div>
+    <div>
+      <h2 id="endTitle"></h2>
+      <div class="bigstars" id="endStars"></div>
+      <p id="endTxt"></p>
+      <div id="endRevoir"></div>
+      <div class="row">
+        <button class="btn" id="again">Rejouer</button>
+        <button class="btn alt" id="up">Niveau supérieur</button>
+        <button class="btn ghost" id="toMenu">Changer d’ambiance ou de leçon</button>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const P=a=>a[Math.floor(Math.random()*a.length)];
+const shuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const fr=(n,d)=>(d==null?String(+(+n).toFixed(6)):(+n).toFixed(d)).replace('.',',');
+const num=s=>{s=String(s==null?'':s).trim().replace(/\s|cm/g,'').replace(',','.');return /^-?\d+(\.\d+)?$/.test(s)?parseFloat(s):NaN};
+const eq=(a,b)=>Math.abs(a-b)<1e-7;
+const M=s=>`<span class="m">${s}</span>`;
+const store={get(k){try{return +localStorage.getItem(k)||0}catch(e){return 0}},set(k,v){try{localStorage.setItem(k,String(v))}catch(e){}}};
+
+
+/* ---------- ambiances ---------- */
+const AMB={
+ ville:{nom:'Ville',build:'le gratte-ciel',sky:['#6ec1f2','#dff3ff'],plate:'#9aa3ad',bricks:['#d01012','#f6c700','#0a5bbf','#2c9c3f','#f2f2f2'],acc:'#d01012',w:()=>6,top:'antenne'},
+ espace:{nom:'Espace',build:'la fusée',sky:['#060a24','#2a3478'],plate:'#5d6a8f',bricks:['#e8ebf2','#1e88e5','#e8ebf2','#ff6d00'],acc:'#ff6d00',w:()=>4,top:'cone'},
+ chateau:{nom:'Château',build:'le donjon',sky:['#f4a76c','#ffe6bd'],plate:'#2c9c3f',bricks:['#a7a9ac','#8a8d91','#c2c4c7','#7b7e82'],acc:'#7b3fb0',w:i=>i<3?8:6,top:'creneaux'},
+ pirates:{nom:'Pirates',build:'le phare',sky:['#ffb347','#fff0b8'],plate:'#e0b04f',bricks:['#d01012','#f4f4f4'],acc:'#0077b6',w:i=>Math.max(3,6-Math.floor(i/4)),top:'lanterne',alt:1}
+};
+let seed=1;const sr=()=>(seed=(seed*9301+49297)%233280)/233280;
+function scene(k,W,H,id){
+ const a=AMB[k],g=H*.9;seed=7;
+ let s=`<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a.sky[0]}"/><stop offset="1" stop-color="${a.sky[1]}"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#${id})"/>`;
+ if(k==='ville'){
+  s+=`<circle cx="${W*.85}" cy="${H*.2}" r="${H*.09}" fill="#ffd23f"/>`;
+  for(let i=0;i<3;i++){const x=W*(.12+i*.3),y=H*(.12+.08*i);s+=`<g fill="#fff" opacity=".85"><ellipse cx="${x}" cy="${y}" rx="${W*.05}" ry="${H*.035}"/><ellipse cx="${x+W*.035}" cy="${y-H*.02}" rx="${W*.035}" ry="${H*.035}"/></g>`}
+  for(let r=0;r<2;r++){let x=-10;while(x<W){const w=W*(.05+sr()*.06),h=H*(.2+sr()*(.3+r*.1))*(r?0.8:1);s+=`<rect x="${x}" y="${g-h}" width="${w}" height="${h}" fill="${r?'#3f6690':'#7fa6cc'}"/>`;if(r)for(let wy=g-h+8;wy<g-10;wy+=14)for(let wx=x+5;wx<x+w-8;wx+=12)s+=`<rect x="${wx}" y="${wy}" width="6" height="7" fill="#ffe58a" opacity=".75"/>`;x+=w+W*(r?.04:.01)}}
+  s+=`<rect y="${g}" width="${W}" height="${H-g}" fill="#7d8792"/>`;
+ }else if(k==='espace'){
+  for(let i=0;i<70;i++)s+=`<circle cx="${sr()*W}" cy="${sr()*g}" r="${.6+sr()*1.4}" fill="#fff" opacity="${.4+sr()*.6}"/>`;
+  s+=`<circle cx="${W*.18}" cy="${H*.3}" r="${H*.12}" fill="#ff7b54"/><ellipse cx="${W*.18}" cy="${H*.3}" rx="${H*.22}" ry="${H*.04}" fill="none" stroke="#ffd3a5" stroke-width="4" transform="rotate(-15 ${W*.18} ${H*.3})"/><circle cx="${W*.8}" cy="${H*.22}" r="${H*.05}" fill="#cfd8ff"/>`;
+  s+=`<path d="M0 ${g} Q${W*.25} ${g-H*.05} ${W*.5} ${g} T${W} ${g} V${H} H0Z" fill="#4a5578"/><ellipse cx="${W*.2}" cy="${g+H*.04}" rx="${W*.04}" ry="${H*.012}" fill="#3a4466"/><ellipse cx="${W*.75}" cy="${g+H*.05}" rx="${W*.05}" ry="${H*.014}" fill="#3a4466"/>`;
+ }else if(k==='chateau'){
+  s+=`<circle cx="${W*.78}" cy="${H*.55}" r="${H*.12}" fill="#ffd27a"/>`;
+  const cx=W*.2,cb=g-H*.18;s+=`<g fill="#8a6fb3" opacity=".6"><rect x="${cx}" y="${cb-H*.22}" width="${W*.12}" height="${H*.22}"/><rect x="${cx-W*.03}" y="${cb-H*.32}" width="${W*.04}" height="${H*.32}"/><rect x="${cx+W*.11}" y="${cb-H*.32}" width="${W*.04}" height="${H*.32}"/></g>`;
+  s+=`<path d="M0 ${g-H*.15} Q${W*.3} ${g-H*.32} ${W*.6} ${g-H*.14} T${W} ${g-H*.2} V${H} H0Z" fill="#7fbf5f"/><path d="M0 ${g-H*.02} Q${W*.5} ${g-H*.1} ${W} ${g-H*.02} V${H} H0Z" fill="#4c9a3f"/>`;
+ }else{
+  s+=`<circle cx="${W*.8}" cy="${H*.5}" r="${H*.11}" fill="#ffd23f"/><rect y="${H*.58}" width="${W}" height="${H*.42}" fill="#1e88c8"/>`;
+  for(let i=0;i<5;i++){const y=H*(.63+i*.06);s+=`<path d="M0 ${y} q${W*.05} -6 ${W*.1} 0 t${W*.1} 0 t${W*.1} 0 t${W*.1} 0 t${W*.1} 0 t${W*.1} 0 t${W*.1} 0 t${W*.1} 0 t${W*.1} 0 t${W*.1} 0" stroke="#7fd0f5" stroke-width="2" fill="none" opacity=".6"/>`}
+  s+=`<ellipse cx="${W*.5}" cy="${g+H*.06}" rx="${W*.6}" ry="${H*.1}" fill="#e9c46a"/><path d="M${W*.1} ${g} q${W*.02} -${H*.15} -${W*.01} -${H*.28}" stroke="#8b5a2b" stroke-width="6" fill="none"/><g fill="#2c9c3f"><ellipse cx="${W*.07}" cy="${g-H*.28}" rx="${W*.05}" ry="${H*.025}" transform="rotate(20 ${W*.07} ${g-H*.28})"/><ellipse cx="${W*.12}" cy="${g-H*.28}" rx="${W*.05}" ry="${H*.025}" transform="rotate(-20 ${W*.12} ${g-H*.28})"/></g>`;
+ }
+ return s;
+}
+function brick(x,y,n,c,cls=''){
+ const w=n*18;let s=`<g class="${cls}"><rect x="${x}" y="${y}" width="${w}" height="20" rx="2" fill="${c}" stroke="rgba(0,0,0,.35)"/><rect x="${x+1}" y="${y+1}" width="${w-2}" height="4" fill="rgba(255,255,255,.3)"/><rect x="${x}" y="${y+15}" width="${w}" height="5" fill="rgba(0,0,0,.14)"/>`;
+ for(let i=0;i<n;i++){const cx=x+9+i*18;s+=`<rect x="${cx-5.5}" y="${y-4}" width="11" height="5" fill="${c}" stroke="rgba(0,0,0,.3)"/><ellipse cx="${cx}" cy="${y-4}" rx="5.5" ry="2" fill="${c}" stroke="rgba(0,0,0,.3)"/><ellipse cx="${cx-1}" cy="${y-4.4}" rx="3" ry="1" fill="rgba(255,255,255,.5)"/>`}
+ return s+'</g>';
+}
+function topPiece(k,T,n,X=150){
+ const a=AMB[k],w=n*18;
+ if(k==='ville')return `<rect x="${X-w/2}" y="${T-6}" width="${w}" height="6" fill="#4a4f57"/><line x1="${X}" y1="${T-6}" x2="${X}" y2="${T-50}" stroke="#333" stroke-width="3"/><circle cx="${X}" cy="${T-52}" r="5" fill="#d01012"/>`;
+ if(k==='espace')return `<path d="M${X-w/2} ${T} L${X} ${T-60} L${X+w/2} ${T}Z" fill="${a.acc}" stroke="rgba(0,0,0,.3)"/><circle cx="${X}" cy="${T-22}" r="7" fill="#9fd3ff" stroke="#fff" stroke-width="2"/>`;
+ if(k==='chateau'){let s='';for(let i=0;i<n;i+=2)s+=brick(X-w/2+i*18,T-20,1,'#a7a9ac');return s+`<line x1="${X}" y1="${T-20}" x2="${X}" y2="${T-76}" stroke="#5a4632" stroke-width="3"/><path d="M${X+1} ${T-76} L${X+36} ${T-66} L${X+1} ${T-56}Z" fill="${a.acc}"/>`}
+ return `<circle cx="${X}" cy="${T-20}" r="42" fill="#fff6a8" opacity=".45"/><rect x="${X-27}" y="${T-34}" width="54" height="34" fill="#ffd23f" stroke="#333" stroke-width="2"/><line x1="${X-9}" y1="${T-34}" x2="${X-9}" y2="${T}" stroke="#333" stroke-width="2"/><line x1="${X+9}" y1="${T-34}" x2="${X+9}" y2="${T}" stroke="#333" stroke-width="2"/><path d="M${X-33} ${T-34} L${X} ${T-60} L${X+33} ${T-34}Z" fill="#d01012"/>`;
+}
+function buildSVG(k,built,done,newest){
+ const a=AMB[k];let s=`<rect x="0" y="-3000" width="300" height="3001" fill="${a.sky[0]}"/>`+scene(k,300,420,'sk'+Math.random().toString(36).slice(2,7));
+ s+=`<rect x="30" y="380" width="240" height="14" rx="2" fill="${a.plate}" stroke="rgba(0,0,0,.3)"/>`;
+ for(let i=0;i<13;i++){const cx=39+i*18.5;s+=`<ellipse cx="${cx}" cy="380" rx="5" ry="2" fill="${a.plate}" stroke="rgba(0,0,0,.25)"/>`}
+ if(k==='espace'&&built.length){s+=`<path d="M114 380 L114 340 L96 380Z" fill="${a.acc}"/><path d="M186 380 L186 340 L204 380Z" fill="${a.acc}"/>`}
+ built.forEach((b,i)=>{const n=a.w(i);s+=brick(150-n*9,380-20*(i+1),n,b.gold?'#f6c700':b.c,(i===newest?'drop':''))+(b.gold?`<path d="M${150-4} ${380-20*i-13} l4 -4 l4 4 l-4 4z" fill="#fff"/>`:'')});
+ if(done&&built.length)s+=topPiece(k,380-20*built.length,a.w(built.length-1));
+ return s;
+}
+
+/* ---------- figures ---------- */
+const V=a=>[Math.cos(a*Math.PI/180),-Math.sin(a*Math.PI/180)];
+const COL=['currentColor','#d01012','#0a5bbf','#1f8a3a'];
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+function ln(p,ang,h,lab,col,end=1,H=210){
+ const[ux,uy]=V(ang),x1=p[0]-ux*h,y1=p[1]-uy*h,x2=p[0]+ux*h,y2=p[1]+uy*h;
+ const ex=end>0?x2-ux*14:x1+ux*14,ey=end>0?y2-uy*14:y1+uy*14;
+ const lx=cl(ex+uy*16,18,302),ly=cl(ey-ux*16,14,H-8);
+ return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="2.4" stroke-linecap="round"/><text x="${lx}" y="${ly}" class="lab" text-anchor="middle" dominant-baseline="middle" style="fill:${col}">${lab}</text>`;
+}
+function ra(p,a1,a2,s=10){const u=V(a1),v=V(a2);return `<path d="M${p[0]+u[0]*s} ${p[1]+u[1]*s} L${p[0]+u[0]*s+v[0]*s} ${p[1]+u[1]*s+v[1]*s} L${p[0]+v[0]*s} ${p[1]+v[1]*s}" fill="none" class="ink" stroke-width="1.6"/>`}
+function cross(x,y,n,dy=-14){return `<g class="ink" stroke-width="2"><line x1="${x-5}" y1="${y-5}" x2="${x+5}" y2="${y+5}"/><line x1="${x-5}" y1="${y+5}" x2="${x+5}" y2="${y-5}"/></g>`+(n?`<text x="${x}" y="${y+dy}" class="pt" text-anchor="middle" dominant-baseline="middle">${n}</text>`:'')}
+const svgW=(inner,vb='0 0 320 210',lab='Figure')=>`<svg viewBox="${vb}" role="img" aria-label="${lab}">${inner}</svg>`;
+
+function figProp(p,D,A,B){
+ const C=[160,108];let s='';
+ if(p===1){const a=R(-15,15),u=V(a);const I1=[C[0]-u[0]*55,C[1]-u[1]*55],I2=[C[0]+u[0]*55,C[1]+u[1]*55];
+  s=ln(C,a,150,D,COL[0])+ln(I1,a+90,88,A,COL[1])+ln(I2,a+90,88,B,COL[2])+ra(I1,a,a+90)+ra(I2,a,a+90);}
+ else if(p===2){const a=P([R(16,30),R(-30,-16)]),n=V(a+90);const o=shuf([-42,0,42]);
+  [[D,0],[A,1],[B,2]].forEach(([nm,i],j)=>{s+=ln([C[0]+n[0]*o[j],C[1]+n[1]*o[j]],a,112,nm,COL[i])});}
+ else{const a=R(-12,12),u=V(a),n=V(a+90),sh=R(-50,50);const Q=[C[0]+u[0]*sh,C[1]+u[1]*sh],I=[Q[0]+n[0]*38,Q[1]+n[1]*38];
+  s=ln([C[0]+n[0]*38,C[1]+n[1]*38],a,148,A,COL[1])+ln([C[0]-n[0]*38,C[1]-n[1]*38],a,148,B,COL[2])+ln(Q,a+90,92,D,COL[0])+ra(I,a,a+90);}
+ return svgW(s,'0 0 320 210','Figure avec trois droites');
+}
+function ruler(c,pts=[]){
+ const x0=24,px=290/c.nMaj;let s=`<line x1="${x0}" y1="62" x2="338" y2="62" class="ink" stroke-width="2"/>`;
+ for(let i=0;i<=c.nMaj;i++){const x=x0+i*px;s+=`<line x1="${x}" y1="51" x2="${x}" y2="73" class="ink" stroke-width="2"/>`;
+  if(c.labels.includes(i))s+=`<text x="${x}" y="92" class="lab" text-anchor="middle">${fr(i*c.maj)}</text>`;
+  if(i<c.nMaj)for(let k=1;k<c.sub;k++){const xx=x+k*px/c.sub;s+=`<line x1="${xx}" y1="56" x2="${xx}" y2="68" class="ink" stroke-width="1.2"/>`}}
+ pts.forEach(p=>s+=cross(x0+p.v/c.maj*px,62,p.n,-22));
+ return{svg:svgW(s+'<g id="mk"></g>','0 0 344 104','Demi-droite graduée'),x0,px};
+}
+function distFig(l,lens){
+ const h=R(2,5)+(l>=3&&Math.random()<.5?.5:0),a=R(-12,12),u=V(a),n=V(a+90),C=[160,176],sc=26,sh=R(-25,25);
+ const nm=shuf(['B','C','E','F','H','K','M','N']).slice(0,3),dx=shuf([-108,-62,62,108]).slice(0,2);
+ const H=[C[0]+u[0]*sh,C[1]+u[1]*sh],A=[H[0]+n[0]*h*sc,H[1]+n[1]*h*sc];
+ const feet=[{n:nm[0],p:H,len:h,d:0},...dx.map((d,i)=>({n:nm[i+1],p:[H[0]+u[0]*d,H[1]+u[1]*d],len:Math.round(Math.hypot(h,d/sc)*10)/10,d}))];
+ let s=ln(C,a,156,'(d)',COL[0],-1,210);
+ feet.forEach(f=>{s+=`<line x1="${A[0]}" y1="${A[1]}" x2="${f.p[0]}" y2="${f.p[1]}" stroke="#7b3fb0" stroke-width="2.2"/>`;
+  if(lens){const sg=f.d===0?1:Math.sign(f.d),mx=(A[0]+f.p[0])/2+u[0]*22*sg,my=(A[1]+f.p[1])/2+u[1]*22*sg;s+=`<text x="${mx}" y="${my}" class="len" text-anchor="middle" dominant-baseline="middle">${fr(f.len)} cm</text>`}
+  s+=cross(f.p[0],f.p[1],'',0)+`<text x="${f.p[0]-n[0]*16}" y="${f.p[1]-n[1]*16}" class="pt" text-anchor="middle" dominant-baseline="middle">${f.n}</text>`});
+ s+=ra(H,a+(dx[0]>0&&dx[1]>0?180:0),a+90)+cross(A[0],A[1],'A',-14);
+ return{svg:svgW(s,'0 0 320 210','Point A et droite (d)'),h,feet};
+}
+function gridFig(pts,orient,pos){
+ let s='';for(let i=0;i<=15;i++)s+=`<line x1="${10+i*20}" y1="10" x2="${10+i*20}" y2="210" class="grid"/>`;for(let j=0;j<=10;j++)s+=`<line x1="10" y1="${10+j*20}" x2="310" y2="${10+j*20}" class="grid"/>`;
+ if(orient==='h')s+=`<line x1="10" y1="${10+pos*20}" x2="310" y2="${10+pos*20}" class="ink" stroke-width="2.4"/><text x="296" y="${pos*20}" class="lab" text-anchor="middle">(d)</text>`;
+ else s+=`<line x1="${10+pos*20}" y1="10" x2="${10+pos*20}" y2="210" class="ink" stroke-width="2.4"/><text x="${pos*20-4}" y="24" class="lab" text-anchor="middle">(d)</text>`;
+ pts.forEach(p=>s+=cross(10+p.c*20,10+p.r*20,p.n,-13));
+ return svgW(s,'0 0 320 220','Quadrillage');
+}
+
+/* ---------- règles des leçons ---------- */
+const RULE={
+ p1:['Propriété 1','Si deux droites sont perpendiculaires à la même droite, alors elles sont parallèles.'],
+ p2:['Propriété 2','Si deux droites sont parallèles à une même droite, alors elles sont parallèles.'],
+ p3:['Propriété 3','Si deux droites sont parallèles, alors toute droite perpendiculaire à l’une est perpendiculaire à l’autre.'],
+ pos:['Positions relatives','Deux droites sont sécantes si elles se coupent en un seul point ; perpendiculaires si elles sont sécantes et forment un angle droit ; parallèles si elles ne se coupent jamais.'],
+ notation:['Les symboles','⊥ veut dire « est perpendiculaire à » ; // veut dire « est parallèle à ».'],
+ chain:['Les 3 propriétés','P1 : deux perpendiculaires à une même droite sont parallèles. P2 : deux parallèles à une même droite sont parallèles. P3 : si deux droites sont parallèles, toute perpendiculaire à l’une est perpendiculaire à l’autre.'],
+ grad:['Demi-droite graduée','On choisit une origine (le nombre 0) et une unité de longueur. Un point est repéré par un nombre : son abscisse. On note A(4).'],
+ enc:['Encadrer','Encadrer un nombre, c’est trouver deux nombres, l’un plus petit, l’autre plus grand. La différence entre ces deux nombres est l’amplitude de l’encadrement.'],
+ inter:['Intercaler','Intercaler un nombre entre deux nombres, c’est trouver un nombre compris entre les deux.'],
+ dist:['Distance d’un point à une droite','C’est la distance la plus courte pour aller du point à la droite : la longueur du segment qui va perpendiculairement du point jusqu’à la droite. Ne pas oublier le codage !']
+};
+const mc=(prompt,fig,ans,wrongs,explain,rule,long)=>({kind:'mc',prompt,fig,opts:shuf([ans,...wrongs]),ans,check:v=>v===ans,answerTxt:ans,explain,rule,long});
+const PN=['(d)',"(d')",'(Δ)','(d₁)','(d₂)','(d₃)','(d₄)','(L)'];
+
+/* ---------- leçon 1 : droites ---------- */
+function qNotation(){const[a,b]=shuf(['(d)','(d₁)','(d₂)']),perp=Math.random()<.5,ans=`${a} ${perp?'⊥':'//'} ${b}`;
+ return mc(`Comment écrit-on avec des symboles : « ${a} est ${perp?'perpendiculaire':'parallèle'} à ${b} » ?`,'',ans,[`${a} ${perp?'//':'⊥'} ${b}`,`${a} = ${b}`],'On utilise ⊥ pour « perpendiculaire » et // pour « parallèle ».','notation')}
+function qComplete(){const v=P([
+ ['Si deux droites sont perpendiculaires à la même droite, alors elles sont …','parallèles',['perpendiculaires','sécantes'],'p1'],
+ ['Si deux droites sont parallèles à une même droite, alors elles sont …','parallèles',['perpendiculaires','sécantes'],'p2'],
+ ['Si deux droites sont parallèles, alors toute droite perpendiculaire à l’une est … à l’autre.','perpendiculaire',['parallèle','égale'],'p3']]);
+ return mc(`Complète la propriété : <br>« ${v[0]} »`,'',v[1],v[2],'C’est une propriété du cours à connaître par cœur.',v[3])}
+function qFigProp(p,mode,l){
+ const[D,A,B]=l>=2?shuf(PN).slice(0,3):['(d)','(d₁)','(d₂)'];
+ const H={1:[`${A} ⊥ ${D}`,`${B} ⊥ ${D}`],2:[`${A} // ${D}`,`${B} // ${D}`],3:[`${A} // ${B}`,`${D} ⊥ ${A}`]}[p];
+ const CO={1:`${A} // ${B}`,2:`${A} // ${B}`,3:`${D} ⊥ ${B}`}[p];
+ const W={1:[`${A} ⊥ ${B}`,`${A} // ${D}`],2:[`${A} ⊥ ${B}`,`${A} ⊥ ${D}`],3:[`${D} // ${B}`,`${A} ⊥ ${B}`]}[p];
+ const fig=figProp(p,D,A,B),hyp=`On sait que ${M(H[0])} et ${M(H[1])}.`;
+ if(mode==='which')return mc(`${hyp} On en déduit que ${M(CO)}. Quelle propriété a-t-on utilisée ?`,fig,['Propriété 1','Propriété 2','Propriété 3'][p-1]+' : '+['deux droites perpendiculaires à la même droite sont parallèles','deux droites parallèles à une même droite sont parallèles','si deux droites sont parallèles, toute perpendiculaire à l’une est perpendiculaire à l’autre'][p-1],
+  [1,2,3].filter(x=>x!==p).map(x=>'Propriété '+x+' : '+['deux droites perpendiculaires à la même droite sont parallèles','deux droites parallèles à une même droite sont parallèles','si deux droites sont parallèles, toute perpendiculaire à l’une est perpendiculaire à l’autre'][x-1]),`Les hypothèses ${H[0]} et ${H[1]} correspondent à la propriété ${p}.`,'p'+p,true);
+ return mc(`${hyp} Que peut-on en déduire ?`,fig,CO,W,`D’après la propriété ${p} : ${H[0]} et ${H[1]}, donc ${CO}.`,'p'+p)}
+function qChain(steps,trap,mix){
+ const n=trap?4:steps+1,nm=shuf(PN).slice(0,n),c=nm.map(()=>R(0,1)),rel=(i,j)=>c[i]===c[j]?'//':'⊥';
+ let facts=[],qa=0,qb=steps;for(let i=0;i<steps;i++)facts.push([i,i+1]);
+ if(trap){facts=[[0,1],[2,3]];qa=P([0,1]);qb=P([2,3])}
+ let ft=facts.map(([i,j])=>Math.random()<.5?`${nm[i]} ${rel(i,j)} ${nm[j]}`:`${nm[j]} ${rel(i,j)} ${nm[i]}`);
+ if(mix)ft=shuf(ft);
+ const A=nm[qa],B=nm[qb],ans=trap?'On ne peut pas conclure':`${A} ${rel(qa,qb)} ${B}`;
+ const opts=[`${A} // ${B}`,`${A} ⊥ ${B}`,'On ne peut pas conclure'];
+ let ex;
+ if(trap)ex=`${A} et ${B} n’ont aucune droite en commun dans les données : aucune propriété ne s’applique.`;
+ else{let r=rel(0,1);const st=[];for(let k=1;k<steps;k++){const f=rel(k,k+1),res=(r===f)?'//':'⊥',pp=r==='⊥'&&f==='⊥'?1:r==='//'&&f==='//'?2:3;st.push(`${nm[0]} ${r} ${nm[k]} et ${nm[k]} ${f} ${nm[k+1]}, donc ${M(`${nm[0]} ${res} ${nm[k+1]}`)} (propriété ${pp}).`);r=res}ex=st.join('<br>')}
+ return{kind:'mc',prompt:`On sait que : ${ft.map(M).join(' ; ')}.<br>Que peut-on dire de ${A} et ${B} ?`,fig:'',opts,ans,check:v=>v===ans,answerTxt:ans,explain:ex,rule:'chain'}}
+function qPosition(){const t=R(0,2),C=[160,105],a=R(-20,20);let s;
+ const[D1,D2]=shuf(['(d)',"(d')",'(d₁)','(d₂)']).slice(0,2);
+ if(t===0){const b=a+P([35,50,130,145]);s=ln(C,a,140,D1,COL[1])+ln(C,b,95,D2,COL[2])+cross(C[0],C[1],'A',18)}
+ else if(t===1){s=ln(C,a,140,D1,COL[1])+ln(C,a+90,90,D2,COL[2])+ra(C,a,a+90)}
+ else{const n=V(a+90);s=ln([C[0]+n[0]*35,C[1]+n[1]*35],a,140,D1,COL[1])+ln([C[0]-n[0]*35,C[1]-n[1]*35],a,140,D2,COL[2])}
+ const ans=['sécantes (mais pas perpendiculaires)','perpendiculaires','parallèles'][t];
+ const ex=['Elles se coupent en un seul point, sans former d’angle droit.','Elles sont sécantes et forment un angle droit (le codage le montre).','Elles ne se coupent jamais.'][t];
+ return mc(`Comment sont les droites ${D1} et ${D2} ?`,svgW(s,'0 0 320 210','Deux droites'),ans,['sécantes (mais pas perpendiculaires)','perpendiculaires','parallèles'].filter(x=>x!==ans),ex,'pos')}
+function qPosDef(){const v=P([['Deux droites sont sécantes lorsqu’elles …','se coupent en un seul point',['ne se coupent jamais','forment toujours un angle droit']],
+ ['Deux droites sont perpendiculaires lorsqu’elles …','sont sécantes et forment un angle droit',['ne se coupent jamais','se coupent sans angle droit']],
+ ['Deux droites sont parallèles lorsqu’elles …','ne se coupent jamais',['se coupent en un seul point','forment un angle droit']]]);
+ return mc(v[0],'',v[1],v[2],'C’est la définition des positions relatives de deux droites.','pos',true)}
+function qTrace(){const perp=Math.random()<.5,a=R(-20,20),u=V(a),n=V(a+90),C=[160,170],sh=R(-30,30),A=[C[0]+u[0]*sh+n[0]*95,C[1]+u[1]*sh+n[1]*95];
+ const nm=shuf(['(d₁)','(d₂)','(d₃)']);let s=ln([C[0],C[1]],a,155,'(d)',COL[0],-1),lines=[];
+ if(perp){const H=[A[0]-n[0]*95,A[1]-n[1]*95];lines=[[A,a+90,0],[[A[0]+u[0]*70,A[1]+u[1]*70],a+90,1],[A,a+90+P([22,-22]),2]];s+=ra(H,a,a+90)}
+ else lines=[[A,a,0],[[A[0]-n[0]*45,A[1]-n[1]*45],a,1],[A,a+P([14,-14]),2]];
+ const col=['#1f8a3a','#0a5bbf','#d97a00'];lines.forEach(([p,ang,i])=>s+=ln(p,ang,perp?100:150,nm[i],col[i]));
+ s+=cross(A[0],A[1],'A',-14);
+ return mc(`Quelle droite est ${perp?'perpendiculaire':'parallèle'} à (d) et passe par le point A ?`,svgW(s,'0 0 320 210','Droites et point A'),nm[0],[nm[1],nm[2]],`${nm[0]} passe par A et elle est ${perp?'perpendiculaire':'parallèle'} à (d). ${nm[1]} ne passe pas par A ; ${nm[2]} passe par A mais n’est pas ${perp?'perpendiculaire':'parallèle'} à (d).`,'pos')}
+function genDroites(l){const r=Math.random();
+ if(l===1)return r<.3?qPosition():r<.45?qPosDef():r<.6?qNotation():qFigProp(R(1,3),'concl',1);
+ if(l===2)return r<.2?qTrace():r<.4?qComplete():r<.7?qFigProp(R(1,3),'which',2):qFigProp(R(1,3),'concl',2);
+ if(l===3)return r<.15?qTrace():r<.3?qFigProp(R(1,3),'which',3):qChain(2,r>.8,false);
+ return qChain(r<.6?3:2,r>.82,true)}
+
+/* ---------- leçon 2 : demi-droite graduée ---------- */
+function rCfg(l){const T={1:[[1,1,8]],2:[[1,2,6],[1,10,3]],3:[[2,4,5],[1,5,4],[1,4,5]],4:[[0.5,5,6],[20,4,6],[10,5,5],[1,4,5]]}[l];const[maj,sub,nMaj]=P(T);return{maj,sub,nMaj,labels:l===2?[...Array(nMaj+1).keys()]:[0,1]}}
+function pickV(c,l){const t=c.nMaj*c.sub;let k;do{k=R(1,t)}while((c.sub>1&&k%c.sub===0&&Math.random()<.85)||(l===1&&k<2));return+(k*c.maj/c.sub).toFixed(6)}
+function stepTxt(c){return c.sub===1?`Chaque graduation vaut ${fr(c.maj)}.`:`Entre deux grands traits il y a ${fr(c.maj)}, partagé en ${c.sub} : chaque petite graduation vaut ${fr(+(c.maj/c.sub).toFixed(6))}.`}
+function qRead(l){const c=rCfg(l),v=pickV(c,l),n=P(['A','B','C','E','M']);
+ return{kind:'num',prompt:`Quelle est l’abscisse du point ${n} ?`,fig:ruler(c,[{n,v}]).svg,ans:v,unit:'',check:x=>eq(num(x),v),answerTxt:`${n}(${fr(v)})`,explain:stepTxt(c)+` Le point ${n} a pour abscisse ${fr(v)} : on note ${n}(${fr(v)}).`,rule:'grad'}}
+function qPlace(l){const c=rCfg(l),v=pickV(c,l),n=P(['B','D','F','K','R']),r=ruler(c);
+ return{kind:'click',prompt:`Clique sur la demi-droite pour placer le point ${M(`${n}(${fr(v)})`)}, puis valide.`,fig:r.svg,cfg:c,x0:r.x0,px:r.px,name:n,ans:v,check:x=>x!=null&&eq(x,v),answerTxt:`${n} est sur la graduation ${fr(v)}`,explain:stepTxt(c),rule:'grad'}}
+function qVocab(){const b=fr(R(2,9)+.5);const v=P([
+ ['Pour graduer une demi-droite, on choisit une origine à laquelle on associe le nombre …','0',['1','10']],
+ ['Le nombre qui repère un point sur une demi-droite graduée s’appelle …','son abscisse',['son origine','son unité']],
+ [`Le point B a pour abscisse ${b}. Comment le note-t-on ?`,`B(${b})`,[`${b}(B)`,`B = ${b} cm`]],
+ ['La distance entre les points d’abscisse 0 et 1 s’appelle …','l’unité de longueur',['l’origine','l’abscisse']]]);
+ return mc(v[0],'',v[1],v[2],'C’est le vocabulaire de la demi-droite graduée.','grad')}
+const PREC=['à l’unité','au dixième','au centième'];
+function qEnc(p){const dec=p===2?4:3,pw=10**dec;let X;do{X=R(1,40)*pw+R(1,pw-1)}while(X%10===0);
+ const x=X/pw,lo=Math.floor(X/10**(dec-p)),a=lo/10**p,b=(lo+1)/10**p,mid=fr(x,dec);
+ return{kind:'pair',prompt:`Encadre le nombre ${M(mid)} ${PREC[p]}.`,mid,ans:[a,b],check:v=>eq(num(v[0]),a)&&eq(num(v[1]),b),answerTxt:`${fr(a,p)} < ${mid} < ${fr(b,p)}`,explain:`On cherche deux nombres qui se suivent ${['(entiers consécutifs)','(avec 1 chiffre après la virgule)','(avec 2 chiffres après la virgule)'][p]}. L’amplitude de cet encadrement est ${fr(10**-p)}.`,rule:'enc'}}
+function qAmp(){const p=R(0,2),e=qEnc(p),ans=fr(10**-p);
+ return mc(`Quelle est l’amplitude de l’encadrement ${M(e.answerTxt)} ?`,'',ans,shuf(['1','0,1','0,01','0,001'].filter(x=>x!==ans)).slice(0,3),`L’amplitude est la différence entre les deux nombres : ${fr(e.ans[1],p)} − ${fr(e.ans[0],p)} = ${ans}.`,'enc')}
+function qEncType(){const p=R(0,2),e=qEnc(p);return mc(`${M(e.answerTxt)} : c’est un encadrement …`,'',PREC[p],PREC.filter((_,i)=>i!==p),`L’amplitude est ${fr(10**-p)}, donc c’est un encadrement ${PREC[p]}.`,'enc')}
+function qInter(l){let lo,hi,d;
+ if(l<=2){d=0;lo=R(1,20);hi=lo+R(2,8)}else if(l===3){d=1;const L=R(101,299);lo=L/10;hi=(L+1)/10}else{d=2;const L=R(1001,2999);lo=L/100;hi=(L+1)/100}
+ const ex=fr(+((lo+hi)/2).toFixed(d+1));
+ return{kind:'between',prompt:`Intercale un nombre entre ${M(fr(lo,d))} et ${M(fr(hi,d))}.`,lo:fr(lo,d),hi:fr(hi,d),check:v=>{const x=num(v);return x>lo+1e-9&&x<hi-1e-9},answerTxt:`par exemple ${fr(lo,d)} < ${ex} < ${fr(hi,d)}`,explain:`Il y a une infinité de bonnes réponses !${d?' Astuce : ajoute un chiffre après la virgule.':''}`,rule:'inter'}}
+function genGrad(l){const r=Math.random();
+ if(l===1)return r<.4?qRead(1):r<.75?qPlace(1):qVocab();
+ if(l===2)return r<.3?qRead(2):r<.5?qPlace(2):r<.75?qEnc(0):qInter(2);
+ if(l===3)return r<.2?qRead(3):r<.35?qPlace(3):r<.6?qEnc(1):r<.75?qInter(3):r<.88?qAmp():qEncType();
+ return r<.2?qRead(4):r<.35?qPlace(4):r<.6?qEnc(R(1,2)):r<.8?qInter(4):qAmp()}
+
+/* ---------- leçon 3 : distance ---------- */
+function qWhichSeg(l){const f=distFig(l,false);return mc('Quel segment représente la distance du point A à la droite (d) ?',f.svg,`[A${f.feet[0].n}]`,f.feet.slice(1).map(x=>`[A${x.n}]`),`[A${f.feet[0].n}] va perpendiculairement de A jusqu’à (d) : le petit carré (le codage) montre l’angle droit.`,'dist')}
+function qDef(){return mc('La distance d’un point à une droite, c’est …','','la distance la plus courte pour aller du point à la droite',['la distance la plus longue pour aller du point à la droite','la longueur de n’importe quel segment qui relie le point à la droite'],'On prend toujours le chemin le plus court : celui qui arrive perpendiculairement sur la droite.','dist',true)}
+function qDistNum(l){const f=distFig(l,true),h=f.feet[0];return{kind:'num',prompt:'Quelle est la distance du point A à la droite (d) ?',fig:f.svg,ans:h.len,unit:'cm',check:x=>eq(num(x),h.len),answerTxt:`${fr(h.len)} cm`,explain:`C’est la longueur A${h.n}, le segment perpendiculaire à (d) (le plus court). Les autres segments sont plus longs.`,rule:'dist'}}
+function qCodage(){return mc('Pour montrer sur une figure que [AH] est perpendiculaire à (d), on dessine …','','un petit carré à l’angle droit',['une flèche au bout de la droite','deux petits traits sur le segment'],'Ce petit carré, c’est le codage de l’angle droit : il ne faut pas l’oublier !','dist',true)}
+function qTF(l){if(Math.random()<.35){const v=P([['Si le point A est sur la droite (d), la distance de A à (d) est 0 cm.','Vrai','A est déjà sur la droite : il n’y a aucun chemin à faire.'],['La distance de A à (d) est la longueur de n’importe quel segment qui relie A à (d).','Faux','Seul le segment perpendiculaire (le plus court) donne la distance.']]);return mc(v[0]+' Vrai ou faux ?','',v[1],[v[1]==='Vrai'?'Faux':'Vrai'],v[2],'dist')}
+ const f=distFig(l,true),s=P(f.feet),ok=s.d===0;return mc(`A${s.n} = ${fr(s.len)} cm, donc la distance de A à (d) est ${fr(s.len)} cm. Vrai ou faux ?`,f.svg,ok?'Vrai':'Faux',[ok?'Faux':'Vrai'],ok?`[A${s.n}] est perpendiculaire à (d) (codage) : c’est bien la distance.`:`[A${s.n}] n’est pas perpendiculaire à (d). La distance est A${f.feet[0].n} = ${fr(f.feet[0].len)} cm.`,'dist')}
+function qPossible(){const d=R(3,6),ans=`${fr(d+R(1,3)+.5)} cm`;return mc(`Le point A est à ${d} cm de la droite (d). M est un point de (d). Quelle longueur peut mesurer [AM] ?`,'',ans,[`${fr(d-1)} cm`,`${fr(d-.5)} cm`],`La distance (${d} cm) est la plus courte : AM ne peut pas être plus petit que ${d} cm.`,'dist')}
+function qGrid(){const o=P(['h','v']);let pos,A,k;
+ if(o==='h'){pos=9;k=R(2,7);A={n:'A',c:R(2,13),r:pos-k}}else{pos=1;k=R(2,10);A={n:'A',c:pos+k,r:R(2,8)}}
+ return{kind:'num',prompt:'Chaque carreau mesure 1 cm. Quelle est la distance du point A à la droite (d) ?',fig:gridFig([A],o,pos),ans:k,unit:'cm',check:x=>eq(num(x),k),answerTxt:`${k} cm`,explain:`On compte les carreaux en allant perpendiculairement de A jusqu’à (d) : ${k} carreaux.`,rule:'dist'}}
+function qCloser(){const pos=9,ka=R(1,7);let kb=Math.random()<.2?ka:R(1,7);if(kb===ka&&Math.random()<.5)kb=ka%7+1;
+ const ca=R(2,6),cb=R(9,13),pts=[{n:'A',c:ca,r:pos-ka},{n:'B',c:cb,r:pos-kb}],ans=ka<kb?'A':kb<ka?'B':'Ils sont à la même distance';
+ return mc('Chaque carreau mesure 1 cm. Quel point est le plus proche de la droite (d) ?',gridFig(pts,'h',pos),ans,['A','B','Ils sont à la même distance'].filter(x=>x!==ans),`A est à ${ka} cm de (d) et B est à ${kb} cm (on compte perpendiculairement).`,'dist')}
+function qReason(){const d=R(2,6);return mc(`A est à ${d} cm de la droite (d). M est sur (d) et AM = ${d} cm. Que peut-on dire de [AM] ?`,'','[AM] est perpendiculaire à (d)',['[AM] est parallèle à (d)','On ne peut rien dire'],'AM est égal à la distance, la plus courte longueur possible : [AM] est donc le segment perpendiculaire.','dist',true)}
+function genDist(l){const r=Math.random();
+ if(l===1)return r<.65?qWhichSeg(1):qDef();
+ if(l===2)return r<.55?qDistNum(2):r<.8?qWhichSeg(2):qCodage();
+ if(l===3)return r<.45?qTF(3):r<.7?qPossible():qDistNum(3);
+ return r<.35?qGrid():r<.6?qCloser():r<.8?qTF(4):qReason()}
+
+const GEN={droites:genDroites,graduee:genGrad,distance:genDist};
+const CH=[{k:'droites',t:'Droites parallèles et perpendiculaires',d:'Sécantes, perpendiculaires, parallèles et les 3 propriétés'},{k:'graduee',t:'Demi-droite graduée',d:'Abscisse, encadrer, intercaler'},{k:'distance',t:'Distance d’un point à une droite',d:'Le chemin le plus court'},{k:'melange',t:'Grand mélange',d:'Les 3 leçons en même temps'}];
+const LV=[{t:'Apprenti',d:'Je découvre : figures et vocabulaire.'},{t:'Bâtisseur',d:'Je reconnais et j’applique les propriétés.'},{t:'Architecte',d:'Je raisonne et je déjoue les pièges.'},{t:'Maître constructeur',d:'Raisonnements en plusieurs étapes, chrono de 45 s.'}];
+const ICO={
+ droites:`<line x1="10" y1="40" x2="90" y2="40" stroke="#d01012" stroke-width="4"/><line x1="30" y1="5" x2="30" y2="52" stroke="#0a5bbf" stroke-width="4"/><line x1="65" y1="5" x2="65" y2="52" stroke="#0a5bbf" stroke-width="4"/>`,
+ graduee:`<line x1="8" y1="30" x2="96" y2="30" stroke="currentColor" stroke-width="3"/>${[0,1,2,3,4,5,6,7,8].map(i=>`<line x1="${10+i*10}" y1="${i%4?25:20}" x2="${10+i*10}" y2="${i%4?35:40}" stroke="currentColor" stroke-width="2"/>`).join('')}<circle cx="60" cy="30" r="5" fill="#d01012"/>`,
+ distance:`<line x1="5" y1="48" x2="95" y2="48" stroke="currentColor" stroke-width="3"/><line x1="50" y1="8" x2="50" y2="48" stroke="#7b3fb0" stroke-width="3"/><path d="M50 40 h8 v8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="50" cy="8" r="4" fill="#d01012"/>`,
+ melange:`${brick(14,30,2,'#d01012')}${brick(50,30,2,'#0a5bbf')}${brick(32,10,2,'#f6c700')}`};
+
+/* ---------- état ---------- */
+const S={amb:'ville',chap:'droites',lvl:1,nq:20};
+try{const sv=JSON.parse(localStorage.getItem('bm-prefs')||'{}');Object.assign(S,sv)}catch(e){}
+function savePrefs(){try{localStorage.setItem('bm-prefs',JSON.stringify({amb:S.amb,chap:S.chap,lvl:S.lvl,nq:S.nq}))}catch(e){}}
+const key=(c,l)=>`bm-${c}-${l}`;
+const starTxt=n=>'★'.repeat(n)+'☆'.repeat(3-n);
+
+function applyAmb(){const a=AMB[S.amb];document.documentElement.style.setProperty('--acc',a.acc);$('#heroScene').innerHTML=scene(S.amb,900,230,'hero')+(()=>{let s='';const cols=a.bricks;for(let i=0;i<6;i++){const n=Math.min(6,a.w(i)),c=a.alt?cols[i%2]:cols[(i*3+1)%cols.length];s+=brick(760-n*9,207-20*(i+1),n,c)}return s+topPiece(S.amb,207-120,a.w(5),760)})()}
+function renderMenu(){
+ $('#ambs').innerHTML=Object.keys(AMB).map(k=>`<button class="card" data-amb="${k}" aria-pressed="${S.amb===k}"><svg viewBox="0 0 220 90" aria-hidden="true">${scene(k,220,90,'m'+k)}</svg><b>${AMB[k].nom}</b><small>Tu construis ${AMB[k].build}</small></button>`).join('');
+ $('#chaps').innerHTML=CH.map(c=>`<button class="card" data-chap="${c.k}" aria-pressed="${S.chap===c.k}"><svg class="ico" viewBox="0 0 100 56" aria-hidden="true" style="color:var(--ink)">${ICO[c.k]}</svg><b>${c.t}</b><small>${c.d}</small></button>`).join('');
+ $('#lvls').innerHTML=LV.map((v,i)=>{let ic='';for(let j=0;j<=i;j++)ic+=brick(30-(j%2)*6,98-22*(j+1),3,['#2c9c3f','#0a5bbf','#f6c700','#d01012'][j]);const st=store.get(key(S.chap,i+1));
+  return `<button class="card" data-lvl="${i+1}" aria-pressed="${S.lvl===i+1}"><svg class="ico" viewBox="0 0 110 100" aria-hidden="true">${ic}</svg><b>${i+1}. ${v.t}</b><small>${v.d}</small><span class="stars" aria-label="${st} étoiles sur 3">${starTxt(st)}</span></button>`}).join('');
+ $('#nqs').innerHTML=[[10,'Partie rapide'],[20,'Partie normale'],[30,'Grande partie']].map(([n,t])=>`<button class="card" data-nq="${n}" aria-pressed="${S.nq===n}"><b>${n}</b><small>${t}</small></button>`).join('');
+ applyAmb()}
+$('#menu').addEventListener('click',e=>{const b=e.target.closest('.card');if(!b)return;if(b.dataset.amb)S.amb=b.dataset.amb;if(b.dataset.chap)S.chap=b.dataset.chap;if(b.dataset.lvl)S.lvl=+b.dataset.lvl;if(b.dataset.nq)S.nq=+b.dataset.nq;savePrefs();renderMenu()});
+function show(id){['menu','game','end'].forEach(x=>$('#'+x).hidden=x!==id);window.scrollTo({top:id==='menu'?0:$('main').offsetTop-8,behavior:'smooth'})}
+
+let G,timer=null;
+function start(){G={nq:S.nq||20,recent:[],i:0,good:0,streak:0,built:[],errs:{},q:null,done:false,sel:null};show('game');drawBuild(-1);next()}
+function fitVB(svg,n){const top=Math.min(0,380-20*n-100),a=AMB[S.amb];svg.setAttribute('viewBox',`0 ${top} 300 ${420-top}`);svg.style.background=`linear-gradient(${a.sky[0]},${a.sky[0]} 50%,${a.k==='ville'?'#7d8792':a.plate})`}
+function drawBuild(newest){const sv=$('#buildSvg');fitVB(sv,G.built.length);sv.innerHTML=buildSVG(S.amb,G.built,false,newest);$('#buildCap').textContent=`${G.built.length} brique${G.built.length>1?'s':''} pour ${AMB[S.amb].build}`}
+function hud(){const ch=CH.find(c=>c.k===S.chap);$('#hud').innerHTML=`<span class="chip acc">${AMB[S.amb].nom}</span><span class="chip">${ch.t}</span><span class="chip">${LV[S.lvl-1].t}</span><span class="chip">Série : ${G.streak}</span>`+(S.lvl===4?`<span class="timer" aria-hidden="true"><i id="tbar"></i></span>`:'')}
+function next(){
+ if(G.i>=G.nq)return finish();
+ G.i++;const ch=S.chap==='melange'?P(['droites','graduee','distance']):S.chap;
+ let q,tries=0;do{q=GEN[ch](S.lvl);tries++}while(G.recent.includes(q.prompt+(q.fig||''))&&tries<12);G.recent.push(q.prompt+(q.fig||''));if(G.recent.length>8)G.recent.shift();
+ G.q=q;G.answered=false;G.sel=null;hud();
+ $('#qnum').textContent=`Question ${G.i} sur ${G.nq}`;$('#prompt').innerHTML=q.prompt;
+ const fg=$('#fig');fg.innerHTML=q.fig||'';fg.className='figbox'+(q.kind==='click'?' click':'');fg.hidden=!q.fig;$('#fb').innerHTML='';
+ const A=$('#answer');
+ if(q.kind==='mc'){A.innerHTML=`<div class="opts${q.long||q.opts.some(o=>o.length>34)?' long':''}"></div>`;const box=A.firstChild;q.opts.forEach(o=>{const b=document.createElement('button');b.className='opt';b.textContent=o;b.onclick=()=>{if(!G.answered)resolve(q.check(o),o,b)};box.appendChild(b)})}
+ else{let row='';
+  if(q.kind==='num')row=`<input id="in1" inputmode="decimal" autocomplete="off" aria-label="Ta réponse"> ${q.unit||''}`;
+  if(q.kind==='pair')row=`<input id="in1" inputmode="decimal" autocomplete="off" aria-label="Nombre plus petit"> &lt; <b>${q.mid}</b> &lt; <input id="in2" inputmode="decimal" autocomplete="off" aria-label="Nombre plus grand">`;
+  if(q.kind==='between')row=`<b>${q.lo}</b> &lt; <input id="in1" inputmode="decimal" autocomplete="off" aria-label="Nombre intercalé"> &lt; <b>${q.hi}</b>`;
+  if(q.kind==='click')row=`<span id="selTxt" style="color:var(--soft)">Aucun point placé pour l’instant.</span>`;
+  A.innerHTML=`<div class="inrow">${row}</div><button class="btn alt" id="val">Valider</button>`;
+  $('#val').onclick=validate;A.querySelectorAll('input').forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter')validate()}));
+  const f=A.querySelector('input');if(f)f.focus({preventScroll:true});
+  if(q.kind==='click'){const svg=fg.querySelector('svg');svg.addEventListener('click',e=>{if(G.answered)return;const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(svg.getScreenCTM().inverse());const st=q.px/q.cfg.sub;let k=Math.round((p.x-q.x0)/st);k=cl(k,0,q.cfg.nMaj*q.cfg.sub);G.sel=+(k*q.cfg.maj/q.cfg.sub).toFixed(6);svg.querySelector('#mk').innerHTML=`<g style="color:#d01012">${cross(q.x0+k*st,62,q.name,-22)}</g>`;$('#selTxt').textContent=`Tu as placé ${q.name} sur la graduation ${fr(G.sel)}.`})}
+ }
+ startTimer()}
+function validate(){if(G.answered)return;const q=G.q;let v;
+ if(q.kind==='click'){if(G.sel==null){$('#selTxt').textContent='Clique d’abord sur la demi-droite pour placer le point.';return}v=G.sel}
+ else if(q.kind==='pair'){v=[$('#in1').value,$('#in2').value];if(v.some(x=>isNaN(num(x)))){flash('Écris deux nombres (par exemple 3,6).');return}}
+ else{v=$('#in1').value;if(isNaN(num(v))){flash('Écris un nombre (avec une virgule si besoin).');return}}
+ resolve(q.check(v),v)}
+function flash(t){$('#fb').innerHTML=`<p style="color:var(--ko);margin:8px 0 0">${t}</p>`}
+function startTimer(){clearInterval(timer);if(S.lvl!==4)return;const T=45000,t0=Date.now();timer=setInterval(()=>{const r=1-(Date.now()-t0)/T;const b=$('#tbar');if(b)b.style.width=Math.max(0,r*100)+'%';if(r<=0){clearInterval(timer);if(!G.answered)resolve(false,null,null,true)}},100)}
+function resolve(ok,v,btn,late){
+ clearInterval(timer);G.answered=true;const q=G.q;
+ document.querySelectorAll('#answer input,#answer .opt,#val').forEach(x=>x.disabled=true);
+ if(q.kind==='mc')document.querySelectorAll('#answer .opt').forEach(b=>{if(b.textContent===q.ans)b.classList.add('good');else if(b===btn)b.classList.add('bad')});
+ let bonus=false;
+ if(ok){G.good++;G.streak++;const a=AMB[S.amb];G.built.push({c:a.alt?a.bricks[G.built.length%2]:P(a.bricks)});if(G.streak%3===0){G.built.push({gold:1});bonus=true}drawBuild(G.built.length-1)}
+ else{G.streak=0;G.errs[q.rule]=(G.errs[q.rule]||0)+1;const svg=$('#buildSvg');svg.insertAdjacentHTML('beforeend',brick(120,60,4,'#9aa3ad','fall'));setTimeout(()=>{const f=svg.querySelector('.fall');if(f)f.remove()},1100)}
+ if(q.kind==='click'&&!ok){const svg=$('#fig svg');if(svg)svg.querySelector('#mk').insertAdjacentHTML('beforeend',`<g style="color:#1f8a3a">${cross(q.x0+q.ans/q.cfg.maj*q.px,62,'',0)}</g><text x="${q.x0+q.ans/q.cfg.maj*q.px}" y="38" class="pt" text-anchor="middle" style="fill:#1f8a3a">ici</text>`)}
+ hud();const ru=RULE[q.rule],last=G.i>=G.nq;
+ $('#fb').innerHTML=`<div class="fb ${ok?'ok':'ko'}"><h3>${ok?(bonus?'Bravo ! 3 de suite : brique dorée en bonus !':P(['Brique posée !','Bien joué !','Exact, une brique de plus !'])):late?'Temps écoulé, la brique est tombée…':'Oups, la brique est tombée…'}</h3>${ok?'':`<p>La bonne réponse : <b>${q.answerTxt}</b></p>`}<p>${q.explain}</p><div class="rule"><b>Rappel de la leçon · ${ru[0]}</b>${ru[1]}</div><button class="btn" id="nx">${last?'Voir ma construction':'Question suivante'}</button></div>`;
+ const nx=$('#nx');nx.onclick=next;nx.focus({preventScroll:true});$('#fb').scrollIntoView({behavior:'smooth',block:'nearest'})}
+function finish(){
+ clearInterval(timer);const ra=G.good/G.nq,st=ra>=.9?3:ra>=.7?2:ra>=.5?1:0,k=key(S.chap,S.lvl);if(st>store.get(k))store.set(k,st);
+ show('end');fitVB($('#endSvg'),G.built.length);$('#endSvg').innerHTML=buildSVG(S.amb,G.built,true,-1);
+ $('#endTitle').textContent=st===3?`Chef-d’œuvre ! Tu maîtrises le niveau ${LV[S.lvl-1].t}.`:st===2?'Très belle construction !':st===1?'Bonne construction, continue !':'Ta construction a besoin de renforts.';
+ $('#endStars').innerHTML='★'.repeat(st)+`<span class="off">${'★'.repeat(3-st)}</span>`;
+ $('#endTxt').textContent=`${G.good} bonne${G.good>1?'s':''} réponse${G.good>1?'s':''} sur ${G.nq} · ${G.built.length} brique${G.built.length>1?'s':''} posée${G.built.length>1?'s':''} pour ${AMB[S.amb].build}.${st<3?` Il faut ${Math.ceil(G.nq*.9)} bonnes réponses pour les 3 étoiles.`:''}`;
+ const er=Object.entries(G.errs);$('#endRevoir').innerHTML=er.length?`<div class="revoir"><b>À revoir :</b><ul>${er.map(([r,n])=>`<li><b>${RULE[r][0]}</b> (${n} erreur${n>1?'s':''}) : ${RULE[r][1]}</li>`).join('')}</ul></div>`:'';
+ $('#up').hidden=S.lvl>=4}
+$('#go').onclick=start;$('#again').onclick=start;
+$('#up').onclick=()=>{S.lvl=Math.min(4,S.lvl+1);savePrefs();renderMenu();start()};
+$('#toMenu').onclick=()=>{renderMenu();show('menu')};
+renderMenu();
+}
+</script>
+</body>
+</html>
